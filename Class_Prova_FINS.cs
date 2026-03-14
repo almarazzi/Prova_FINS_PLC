@@ -165,17 +165,21 @@ namespace Prova_FINS_TCP
             return b;
 
         }
-        /*  public static byte[] ScrivereStringa(ushort CodiciComadi, byte MemoriaArea, ushort Indirizzo, byte Bit, string value) // Fins_Freim_scrittura_striga
+          public static byte[] ScrivereStringa(ushort CodiciComadi, byte MemoriaArea, ushort Indirizzo, byte Bit, string value, byte NodoClient) // Fins_Freim_scrittura_striga
           {
               var T = Encoding.ASCII.GetBytes(value);
-              Span<byte> span = stackalloc byte[Marshal.SizeOf<TcpHeader>() + Marshal.SizeOf<FinsHeader>() + Marshal.SizeOf<Comandi>() + (ushort)T.Length];
-              ScrivereTcpHeader1(span, (uint)span.Length);
-              ScrivereFinsHeader(span);
-              ComandiL(span, CodiciComadi, MemoriaArea, Indirizzo, Bit, (ushort)T.Length);
-              T.CopyTo(span[(Marshal.SizeOf<TcpHeader>() + Marshal.SizeOf<FinsHeader>() + Marshal.SizeOf<Comandi>())..]);
-              return span.ToArray();
+            var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi + T.Length];
+            var of = 0;
+            ScrivereTcpHeader1(b, (uint)b.Length);
+            of += LungezzaHeadrTCP;
+            ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
+            of += LungezzaHederFINS;
+            ComandiL(b.AsSpan(of, LungezzaCommandi), CodiciComadi, MemoriaArea, Indirizzo, Bit, (byte)T.Length);
+            of += LungezzaCommandi;
+            T.CopyTo(b,of);
+              return b;
 
-          }*/
+          }
         /*   public static string LeggiStringa(Span<byte> b, int length)
            {
                byte[] stringBytes = b.Slice(8, length).ToArray();

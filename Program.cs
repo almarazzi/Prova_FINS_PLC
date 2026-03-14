@@ -22,7 +22,7 @@ try
     if (f)
     {
       
-       var g1 = Class_Prova_FINS.ScrivereWord(0x0102, 0xB0, 100, 0, 2, 256, Ritorno[19]);
+       var g1 = Class_Prova_FINS.ScrivereStringa(0x0102, 0xB0, 100, 0,  "si sono un bel ragazzo tu\n si\n", Ritorno[19]);
         Console.WriteLine(BitConverter.ToString(g1));
       await   stream.WriteAsync(g1);
         await stream.ReadAsync(Ritorno);
