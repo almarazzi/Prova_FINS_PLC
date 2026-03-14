@@ -2,28 +2,40 @@
 using System.Net.Sockets;
 
 
-var a = Class_Prova_FINS.ScrivereBIT(0x0102, 0x30, 100, 0, 1, true);
+CancellationTokenSource cts = new CancellationTokenSource();
+CancellationToken token = cts.Token;
+
+var Ritorno = new byte[60];
+var g = Class_Prova_FINS.PrimaConessione_Client_Server();
+
+
 try
 {
-    using (var TCP = new TcpClient())
+    var TCP = new TcpClient();
+
+   await TCP.ConnectAsync("127.0.0.1", 9600);
+    NetworkStream stream = TCP.GetStream();
+
+  await  stream.WriteAsync(g);
+    await stream.ReadAsync(Ritorno);
+    var f = Class_Prova_FINS.Controllo_FINS_TCP_Headr_Primo(Ritorno);
+    if (f)
     {
-        await TCP.ConnectAsync("192.168.1.10", 9600);
-        using (NetworkStream stream = TCP.GetStream())
-        {
-            CancellationTokenSource token = new CancellationTokenSource();
-            CancellationToken cancellationToken = token.Token;
-
-            await stream.WriteAsync(a, cancellationToken);
-
-
-        }
+      
+       var g1 = Class_Prova_FINS.ScrivereWord(0x0102, 0xB0, 100, 0, 2, 256, Ritorno[19]);
+        Console.WriteLine(BitConverter.ToString(g1));
+      await   stream.WriteAsync(g1);
+        await stream.ReadAsync(Ritorno);
     }
+    
 }
 catch (Exception ex)
 {
 
     Console.WriteLine($"Errore durante la connessione o la scrittura: {ex.Message}");
 }
+
+
 
 
 
