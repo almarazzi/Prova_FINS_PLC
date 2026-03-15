@@ -1,5 +1,4 @@
 ﻿using System.Buffers.Binary;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Prova_FINS_TCP
@@ -27,7 +26,7 @@ namespace Prova_FINS_TCP
             node_addresss_for_allocation_have_been_used = 00000023,
         }
 
-        public enum FINS_TCP_Commandi : uint
+        private enum FINS_TCP_Commandi : uint
         {
             Client_Server = 0x00000000,
             Servet_Client = 0x00000001,
@@ -36,7 +35,7 @@ namespace Prova_FINS_TCP
             Conenection_Confirmation = 0x00000006,
 
         }
-        public enum Command_Code : ushort
+        private enum Command_Code : ushort
         {
             M_Read = 0x0101,
             M_Write = 0x0102,
@@ -84,24 +83,24 @@ namespace Prova_FINS_TCP
             if (!b.AsSpan(of, FINS.Length).ContainsAny(FINS))
                 throw new Exception("l'Heder_Fins_TCP Non Contine FINS");
             of += 4;
-            if(BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of,sizeof(FINS_TCP_Lengt))) != (uint)FINS_TCP_Lengt.Servet_Client_L)
+            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Lengt))) != (uint)FINS_TCP_Lengt.Servet_Client_L)
                 throw new Exception($"lungezza Fins_TCP non coretto");
             of += 4;
-            if(BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) != (uint)FINS_TCP_Commandi.Servet_Client)
+            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) != (uint)FINS_TCP_Commandi.Servet_Client)
                 throw new Exception($"Fins_TCP command non valido");
             of += 4;
             if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Eorri))) != (uint)FINS_TCP_Eorri.Normal)
                 throw new Exception($"Fins_TCP Erorre");
-            
+
         }
 
-        public static void Controllo_Ritrono_Scrittura(byte[] b)
+        public static uint Controllo_Ritrono(byte[] b)
         {
             var of = 0;
             if (!b.AsSpan(of, FINS.Length).ContainsAny(FINS))
                 throw new Exception("l'Heder_Fins_TCP Non Contine FINS");
             of += 4;
-            if ((BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Lengt))) is uint v && (v < 0x00000014 || v > 0x000007E4)))
+            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Lengt))) is uint payloadLen && (payloadLen < 0x00000014 || payloadLen > 0x000007E4))
                 throw new Exception($"lungezza Fins_TCP non coretto");
             of += 4;
             if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) != (uint)FINS_TCP_Commandi.Freim_Send)
@@ -109,32 +108,11 @@ namespace Prova_FINS_TCP
             of += 4;
             if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Eorri))) != (uint)FINS_TCP_Eorri.Normal)
                 throw new Exception($"Fins_TCP Erorre");
-            of += 16;
-            if ((BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(of, sizeof(ushort))) is ushort c) && c != 0x00)
-                throw new Exception($"Comando di lettura non andato a bun fine {c}");
 
-
+            return payloadLen;
         }
 
-        public static void Controllo_Ritrono_Lettura(byte[] b)
-        {
-            var of = 0;
-            if (!b.AsSpan(of, FINS.Length).ContainsAny(FINS))
-                throw new Exception("l'Heder_Fins_TCP Non Contine FINS");
-            of += 4;
-            if ((BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Lengt))) is uint v && (v< 0x00000014 || v>0x000007E4) ))
-                throw new Exception($"lungezza Fins_TCP non coretto");
-            of += 4;
-            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) != (uint)FINS_TCP_Commandi.Freim_Send)
-                throw new Exception($"Fins_TCP command non valido");
-            of += 4;
-            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Eorri))) != (uint)FINS_TCP_Eorri.Normal)
-                throw new Exception($"Fins_TCP Erorre");
-            of += 16;
-            if ((BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(of, sizeof(ushort)))is ushort c) && c != 0x00)
-                throw new Exception($"Comando di lettura non andato a bun fine {c}");
-        }
-
+     
         private static void ScrivereTcpHeader1(Span<byte> buffer, uint Lungezza) // Fins_TCP 16 byte
         {
 
@@ -161,19 +139,18 @@ namespace Prova_FINS_TCP
             buffer[9] = 0x00; //SID codice sessione
 
         }
-        private static void ComandiL(Span<byte> buffer, ushort CodiciComandi, byte MemoriaArea, ushort Indirizzo, byte Bit, byte N) // Fins_command_Lettura 8 byte
+        private static void Comandi(Span<byte> buffer, Command_Code CodiciComandi, Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort SizeElemento) // Fins_command_Lettura 8 byte
         {
-
-            BinaryPrimitives.WriteUInt16BigEndian(buffer, CodiciComandi);
-            buffer[2] = MemoriaArea;
+            BinaryPrimitives.WriteUInt16BigEndian(buffer, (ushort)CodiciComandi);
+            buffer[2] = (byte)MemoriaArea;
             BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(3), Indirizzo);
             buffer[5] = Bit;
-            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(6), N);
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(6), (ushort)(SizeElemento/2));
 
         }
 
 
-        public static byte[] Lettura(ushort CodiciComadi, byte MemoriaArea, ushort Indirizzo, byte Bit, byte NumeroElemeti, byte NodoClient) // Fins_Freim_Lettura
+       public static byte[] Lettura(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort NumeroWord, byte NodoClient) // Fins_Freim_Lettura
         {
             var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi];
             var of = 0;
@@ -181,70 +158,59 @@ namespace Prova_FINS_TCP
             of += LungezzaHeadrTCP;
             ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
             of += LungezzaHederFINS;
-            ComandiL(b.AsSpan(of, LungezzaCommandi), CodiciComadi, MemoriaArea, Indirizzo, Bit, NumeroElemeti);
+            Comandi(b.AsSpan(of, LungezzaCommandi), Command_Code.M_Read, MemoriaArea, Indirizzo, Bit, NumeroWord);
             return b;
 
         }
-
-        public static byte[] ScrivereBIT(ushort CodiciComadi, byte MemoriaArea, ushort Indirizzo, byte Bit, byte NumeroElemeti, bool value, byte NodoClient) // Fins_Freim_scrittura_BIT
+        private static byte[] Scrivere(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort SizeElemento, byte NodoClient) // Fins_Freim_scrittura
         {
-            var b = new byte[LungezzaHeadrTCP+LungezzaHederFINS+LungezzaCommandi+NumeroElemeti];
+            var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi + SizeElemento];
             var of = 0;
             ScrivereTcpHeader1(b, (uint)b.Length);
             of += LungezzaHeadrTCP;
-            ScrivereFinsHeader(b.AsSpan(of,LungezzaHederFINS), NodoClient);
+            ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
             of += LungezzaHederFINS;
-            ComandiL(b.AsSpan(of, LungezzaCommandi), CodiciComadi, MemoriaArea, Indirizzo, Bit, NumeroElemeti);
-            of += LungezzaCommandi;
-            b[of] = (byte)(value ? 1 : 0);
+            Comandi(b.AsSpan(of, LungezzaCommandi), Command_Code.M_Write, MemoriaArea, Indirizzo, Bit, SizeElemento);
             return b;
 
         }
 
-        
+        public static byte[] ScrivereBIT(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, bool value, byte NodoClient) // Fins_Freim_scrittura_BIT
+        {
+            var b = Scrivere(MemoriaArea, Indirizzo, Bit,1, NodoClient);
+            b[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi] = (byte)(value ? 1 : 0);
+            return b;
+
+        }
         public static bool IntepretazioneBIT(byte[] b) //Intepretazione_BIT
         {
             
             return b[30] == 0x01;
 
         }
-        public static byte[] ScrivereWord(ushort CodiciComadi, byte MemoriaArea, ushort Indirizzo, byte Bit, byte NumeroElemeti, ushort value, byte NodoClient) // Fins_Freim_scrittura_Word
+        public static byte[] ScrivereWord(Memory_Area_Code MemoriaArea, ushort Indirizzo, ushort value, byte NodoClient) // Fins_Freim_scrittura_Word
         {
-            var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi + NumeroElemeti];
-            var of = 0;
-            ScrivereTcpHeader1(b, (uint)b.Length);
-            of += LungezzaHeadrTCP;
-            ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
-            of += LungezzaHederFINS;
-            ComandiL(b.AsSpan(of, LungezzaCommandi), CodiciComadi, MemoriaArea, Indirizzo, Bit, NumeroElemeti);
-            of += LungezzaCommandi;
-            BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(of, NumeroElemeti), value);
+            var b = Scrivere(MemoriaArea, Indirizzo, 0, 2, NodoClient);
+            BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi, 2), value);
             return b;
 
         }
 
-        public static uint IntepretazioneWord(byte[] b) //Intepretazione_BIT
+        public static uint IntepretazioneWord(byte[] b) //Intepretazione_Word
         {
 
-            return BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(30,2));
+            return BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(30, sizeof(ushort)));
 
         }
-        public static byte[] ScrivereStringa(ushort CodiciComadi, byte MemoriaArea, ushort Indirizzo, byte Bit, string value, byte NodoClient) // Fins_Freim_scrittura_striga
-          {
-              var T = Encoding.ASCII.GetBytes(value);
-            var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi + T.Length];
-            var of = 0;
-            ScrivereTcpHeader1(b, (uint)b.Length);
-            of += LungezzaHeadrTCP;
-            ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
-            of += LungezzaHederFINS;
-            ComandiL(b.AsSpan(of, LungezzaCommandi), CodiciComadi, MemoriaArea, Indirizzo, Bit, (byte)T.Length);
-            of += LungezzaCommandi;
-            T.CopyTo(b,of);
-              return b;
+        public static byte[] ScrivereStringa(Memory_Area_Code MemoriaArea, ushort Indirizzo, string value, byte NodoClient) // Fins_Freim_scrittura_striga
+        {
+            var T = Encoding.ASCII.GetBytes(value);
+            var b = Scrivere(MemoriaArea, Indirizzo, 0,(ushort)(T.Length), NodoClient);
+            T.CopyTo(b, LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi);
+            return b;
 
-          }
-        public static string IntepretazioneString(byte[] b) //Intepretazione_BIT
+        }
+        public static string IntepretazioneString(byte[] b) //Intepretazione_Stringa
         {
             var c = 0;
             for (int i = 30; i < 255; i++)
@@ -255,49 +221,9 @@ namespace Prova_FINS_TCP
                 }
                 c++;
             }
-            return Encoding.ASCII.GetString(b,30,c);
+            return Encoding.ASCII.GetString(b, 30, c);
         }
-
-
-
-
-
-
-        /*   public static string LeggiStringa(Span<byte> b, int length)
-           {
-               byte[] stringBytes = b.Slice(8, length).ToArray();
-               return Encoding.ASCII.GetString(stringBytes);
-           }
-           public static ushort LeggiWord(Span<byte> b) // Fins_command_Lettura
-           {
-
-               return BinaryPrimitives.ReadUInt16BigEndian(b.Slice(8));
-
-           }*/
-
 
     }
 }
 
-
-/*
- * AREA BIT
- * CIO 0x30
- * Work 0x31
- * H 0x32
- * A 0x33
- * 
- * AREA WORD
- * CIO 0xB0
- * Worh 0xB1
- * H 0xB2
- * A 0xB3
- * DM 0x82
- * EM 0x20-0x2F
- * 
- * comandi code 
- * MRS 0x01 acesso I/O area
- * SRC 0x01 Read
- * SRC 0x02 write
- * 
- */
