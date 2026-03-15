@@ -101,14 +101,17 @@ namespace Prova_FINS_TCP
             if (!b.AsSpan(of, FINS.Length).ContainsAny(FINS))
                 throw new Exception("l'Heder_Fins_TCP Non Contine FINS");
             of += 4;
-            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Lengt))) != (uint)FINS_TCP_Lengt.Servet_Client_L)
+            if ((BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Lengt))) is uint v && (v < 0x00000014 || v > 0x000007E4)))
                 throw new Exception($"lungezza Fins_TCP non coretto");
             of += 4;
-            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) != (uint)FINS_TCP_Commandi.Servet_Client)
+            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) != (uint)FINS_TCP_Commandi.Freim_Send)
                 throw new Exception($"Fins_TCP command non valido");
             of += 4;
             if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Eorri))) != (uint)FINS_TCP_Eorri.Normal)
                 throw new Exception($"Fins_TCP Erorre");
+            of += 16;
+            if ((BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(of, sizeof(ushort))) is ushort c) && c != 0x00)
+                throw new Exception($"Comando di lettura non andato a bun fine {c}");
 
 
         }
