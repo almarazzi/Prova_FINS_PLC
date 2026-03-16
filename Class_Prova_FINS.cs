@@ -6,6 +6,49 @@ namespace Prova_FINS_TCP
     public class Class_Prova_FINS
     {
 
+     /*   public enum NumeroWord : ushort
+        {
+            Byte = 1, //non sono Sicuro??
+            INT = 1, //Segnio
+            DINT = 2, //Segnio
+            UDINT = 2, //Senza Segnio
+            ULINT = 4, //Senza Segnio
+            REAL = 2,
+            LREAL = 4,
+            WORD = 1,
+            DWORD = 2,
+            LWORD = 4,
+        }*/
+        public enum Command_Code : ushort
+        {
+            M_Read = 0x0101,
+            M_Write = 0x0102,
+        }
+
+        public enum Memory_Area_Code : byte
+        {
+            Bit_CIO = 0x30,
+            Bit_WR = 0x31,
+            Bit_HR = 0x32,
+            Bit_AR = 0x33,
+            Bit_DM = 0x02,
+
+            Word_CIO = 0xB0,
+            Word_WR = 0xB1,
+            Word_HR = 0xB3,
+            Word_AR = 0xB3,
+            Word_DM = 0x82,
+        }
+
+        public enum FINS_TCP_Commandi : uint
+        {
+            Client_Server = 0x00000000,
+            Servet_Client = 0x00000001,
+            Freim_Send = 0x00000002,
+            Freim_Error = 0x00000003,
+            Conenection_Confirmation = 0x00000006,
+
+        }
         private enum FINS_TCP_Lengt : uint
         {
             Client_Server_L = 0x0000000C,
@@ -26,34 +69,6 @@ namespace Prova_FINS_TCP
             node_addresss_for_allocation_have_been_used = 00000023,
         }
 
-        private enum FINS_TCP_Commandi : uint
-        {
-            Client_Server = 0x00000000,
-            Servet_Client = 0x00000001,
-            Freim_Send = 0x00000002,
-            Freim_Error = 0x00000003,
-            Conenection_Confirmation = 0x00000006,
-
-        }
-        private enum Command_Code : ushort
-        {
-            M_Read = 0x0101,
-            M_Write = 0x0102,
-        }
-        public enum Memory_Area_Code : byte
-        {
-            Bit_CIO = 0x30,
-            Bit_WR = 0x31,
-            Bit_HR = 0x32,
-            Bit_AR = 0x33,
-            Bit_DM = 0x02,
-
-            Word_CIO = 0xB0,
-            Word_WR = 0xB1,
-            Word_HR = 0xB3,
-            Word_AR = 0xB3,
-            Word_DM = 0x82,
-        }
         private const int LungezzaHeadrPrimaConessione_Invio = 20;
         private const int LungezzaHeadrTCP = 16;
         private const int LungezzaHederFINS = 10;
@@ -94,7 +109,7 @@ namespace Prova_FINS_TCP
 
         }
 
-        public static uint Controllo_Ritrono(byte[] b)
+        public static (uint, bool) Controllo_Ritrono(byte[] b)
         {
             var of = 0;
             if (!b.AsSpan(of, FINS.Length).ContainsAny(FINS))
@@ -105,11 +120,13 @@ namespace Prova_FINS_TCP
             of += 4;
             if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) != (uint)FINS_TCP_Commandi.Freim_Send)
                 throw new Exception($"Fins_TCP command non valido");
+            if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Commandi))) == (uint)FINS_TCP_Commandi.Conenection_Confirmation)
+                return (payloadLen, false);
             of += 4;
             if (BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(of, sizeof(FINS_TCP_Eorri))) != (uint)FINS_TCP_Eorri.Normal)
                 throw new Exception($"Fins_TCP Erorre");
 
-            return payloadLen;
+            return (payloadLen, true);
         }
 
 
@@ -123,9 +140,6 @@ namespace Prova_FINS_TCP
             BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(of), (uint)FINS_TCP_Commandi.Freim_Send);
             of += 4;
             BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(of), (uint)FINS_TCP_Eorri.Normal);
-
-            //MemoryMarshal.Cast<TcpHeader, byte>(new Span<TcpHeader>(new[] { Header })).CopyTo(b);
-
         }
         private static void ScrivereFinsHeader(Span<byte> buffer, byte NodoClient) // Fins 10 byte
         {
@@ -140,78 +154,61 @@ namespace Prova_FINS_TCP
             buffer[7] = NodoClient; //SA1 Nodo del PC
             buffer[8] = 0x00; //SA2
             buffer[9] = 0x00; //SID codice sessione
-
         }
-        private static void Comandi(Span<byte> buffer, Command_Code CodiciComandi, Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort SizeElemento) // Fins_command_Lettura 8 byte
+        private static void Comandi(Span<byte> buffer, Command_Code CodiciComandi, Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, int NumeroByteDati) // Fins_command_Lettura 8 byte
         {
+            var of = 0;
             BinaryPrimitives.WriteUInt16BigEndian(buffer, (ushort)CodiciComandi);
-            buffer[2] = (byte)MemoriaArea;
-            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(3), Indirizzo);
-            buffer[5] = Bit;
-            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(6), (ushort)(SizeElemento / 2));
-
+            of += 2;
+            buffer[of] = (byte)MemoriaArea;
+            of += 1;
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(of), Indirizzo);
+            of += 2;
+            buffer[of] = Bit;
+            of += 1;
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(of), (ushort)(NumeroByteDati/2));  // Numero di word 
         }
 
-
-        public static byte[] Lettura(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort SizeElemento, byte NodoClient) // Fins_Freim_Lettura
+        public static byte[] CostruzioneFreim(Command_Code Command, Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, byte NodoClient, int NumeroByteDati) // Fins_Freim
         {
-            var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi];
+            byte[] b;
+            if (Command == Command_Code.M_Write)
+            {
+                b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi + NumeroByteDati];
+            }
+            else
+            {
+                b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi];
+            }
             var of = 0;
             ScrivereTcpHeader1(b, (uint)b.Length);
             of += LungezzaHeadrTCP;
             ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
             of += LungezzaHederFINS;
-            Comandi(b.AsSpan(of, LungezzaCommandi), Command_Code.M_Read, MemoriaArea, Indirizzo, Bit, SizeElemento);
-            return b;
-
-        }
-        private static byte[] Scrivere(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort SizeElemento, byte NodoClient) // Fins_Freim_scrittura
-        {
-            var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi + SizeElemento];
-            var of = 0;
-            ScrivereTcpHeader1(b, (uint)b.Length);
-            of += LungezzaHeadrTCP;
-            ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
-            of += LungezzaHederFINS;
-            Comandi(b.AsSpan(of, LungezzaCommandi), Command_Code.M_Write, MemoriaArea, Indirizzo, Bit, SizeElemento);
+            Comandi(b.AsSpan(of, LungezzaCommandi), Command, MemoriaArea, Indirizzo, Bit, NumeroByteDati);
             return b;
 
         }
 
         public static byte[] ScrivereBIT(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, bool value, byte NodoClient) // Fins_Freim_scrittura_BIT
         {
-            var b = Scrivere(MemoriaArea, Indirizzo, Bit, 2, NodoClient);
+            var N_Byte = sizeof(bool);
+            var b = CostruzioneFreim(Command_Code.M_Write, MemoriaArea, Indirizzo, Bit, NodoClient, N_Byte);
             b[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi] = (byte)(value ? 1 : 0);
             return b;
 
         }
-        public static bool IntepretazioneBIT(byte[] b) //Intepretazione_BIT
-        {
 
-            return b[30] == 0x01;
-
-        }
         public static byte[] ScrivereWord(Memory_Area_Code MemoriaArea, ushort Indirizzo, ushort value, byte NodoClient) // Fins_Freim_scrittura_Word
         {
-            var b = Scrivere(MemoriaArea, Indirizzo, 0, 2, NodoClient);
+            var N_Byte = sizeof(ushort);
+            var b = CostruzioneFreim(Command_Code.M_Write, MemoriaArea, Indirizzo, 0, NodoClient, N_Byte);
 
-            BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi, 2), value);
+            BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi, N_Byte), value);
 
             return b;
         }
 
-        public static ushort IntepretazioneWord(byte[] b, ushort SizeElemento) //Intepretazione_Word
-        {
-          //  var f = new ushort[SizeElemento / 2];
-           // for (int i = 14; i < SizeElemento / 2; i++)
-            //{
-              var f= BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(14, sizeof(ushort)));
-
-            //}
-            return f;
-
-
-        }
         public static byte[] ScrivereStringa(Memory_Area_Code MemoriaArea, ushort Indirizzo, string value, byte NodoClient) // Fins_Freim_scrittura_striga
         {
             var T = Encoding.ASCII.GetBytes(value).ToList();
@@ -219,11 +216,30 @@ namespace Prova_FINS_TCP
             {
                 T.Add(0);
             }
-            var b = Scrivere(MemoriaArea, Indirizzo, 0, (ushort)(T.Count), NodoClient);
+            var b = CostruzioneFreim(Command_Code.M_Write, MemoriaArea, Indirizzo, 0, NodoClient, (ushort)T.Count);
             T.CopyTo(b, LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi);
             return b;
 
         }
+
+        public static bool IntepretazioneBIT(byte[] b) //Intepretazione_BIT
+        {
+
+            return b[30] == 0x01;
+
+        }
+
+        public static ushort IntepretazioneWord(byte[] b, ushort SizeElemento) //Intepretazione_Word
+        {
+            //  var f = new ushort[SizeElemento / 2];
+            // for (int i = 14; i < SizeElemento / 2; i++)
+            //{
+            var f = BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(14, sizeof(ushort)));
+
+            //}
+            return f;
+        }
+
         public static string IntepretazioneString(byte[] b) //Intepretazione_Stringa
         {
             var c = 0;

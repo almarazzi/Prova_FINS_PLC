@@ -23,20 +23,26 @@ try
     Class_Prova_FINS.Controllo_FINS_TCP_Headr_Primo(Ritorno);
     Nodo = Ritorno[19];
 
-    //var g1 = Class_Prova_FINS.ScrivereStringa(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 300, "ciao si", Nodo); 
- //  var g1 = Class_Prova_FINS.ScrivereBIT(Class_Prova_FINS.Memory_Area_Code.Bit_CIO, 0, 0, true, Nodo);
+    var g1 = Class_Prova_FINS.ScrivereStringa(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 300, "ciao si", Nodo); 
+    //var g1 = Class_Prova_FINS.ScrivereWord(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100, 100, Nodo); 
+    //var g1 = Class_Prova_FINS.ScrivereBIT(Class_Prova_FINS.Memory_Area_Code.Bit_CIO, 100, 0, true, Nodo);
 
-    //var g1 = Class_Prova_FINS.ScrivereWord(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100,100, Nodo);
-   var g1 = Class_Prova_FINS.Lettura(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100, 0, 2, Nodo);
+    //var g1 = Class_Prova_FINS.CostruzioneFreim(Class_Prova_FINS.Command_Code.M_Read,Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100,0 ,Class_Prova_FINS.NumeroWord.WORD, Nodo);
 
     Array.Clear(Ritorno);
-    await stream.WriteAsync(g1, token);
-    await stream.ReadExactlyAsync(Ritorno,0,16, token);
-    var l = Class_Prova_FINS.Controllo_Ritrono(Ritorno);
+    uint l = 0;
+    bool ok;
+    do
+    {
+        await stream.WriteAsync(g1, token);
+        await stream.ReadExactlyAsync(Ritorno, 0, 16, token);
+        (l,ok) = Class_Prova_FINS.Controllo_Ritrono(Ritorno);
+
+    } while (ok == false);
 
     var b = new byte[l - 8];
     await stream.ReadExactlyAsync(b, token);
-    var g11 = Class_Prova_FINS.IntepretazioneWord(b,20);
+   // var g11 = Class_Prova_FINS.IntepretazioneWord(b,20);
 
 
 }
