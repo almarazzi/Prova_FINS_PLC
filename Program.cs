@@ -9,6 +9,8 @@ var Ritorno = new byte[1024];
 var g = Class_Prova_FINS.PrimaConessione_Client_Server();
 byte Nodo = 0;
 
+//ushort SizeElemento = Word * 2;
+
 try
 {
     var TCP = new TcpClient();
@@ -21,19 +23,20 @@ try
     Class_Prova_FINS.Controllo_FINS_TCP_Headr_Primo(Ritorno);
     Nodo = Ritorno[19];
 
-   // var g1 = Class_Prova_FINS.ScrivereStringa(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 300, "ciao", Nodo);
-   var g1 = Class_Prova_FINS.ScrivereBIT(Class_Prova_FINS.Memory_Area_Code.Bit_CIO, 101, 0, true, Nodo);
+    //var g1 = Class_Prova_FINS.ScrivereStringa(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 300, "ciao si", Nodo); 
+ //  var g1 = Class_Prova_FINS.ScrivereBIT(Class_Prova_FINS.Memory_Area_Code.Bit_CIO, 0, 0, true, Nodo);
 
-   // var g1 = Class_Prova_FINS.ScrivereWord(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100,100, Nodo);
-    //var g1 = Class_Prova_FINS.Lettura((ushort)Class_Prova_FINS.Command_Code.M_Read, (byte)Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100, 0, sizeof(ushort), Nodo);
+    //var g1 = Class_Prova_FINS.ScrivereWord(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100,100, Nodo);
+   var g1 = Class_Prova_FINS.Lettura(Class_Prova_FINS.Memory_Area_Code.Word_CIO, 100, 0, 2, Nodo);
 
     Array.Clear(Ritorno);
     await stream.WriteAsync(g1, token);
-    await stream.ReadExactlyAsync(Ritorno, 0, 16, token);
+    await stream.ReadExactlyAsync(Ritorno,0,16, token);
     var l = Class_Prova_FINS.Controllo_Ritrono(Ritorno);
 
     var b = new byte[l - 8];
     await stream.ReadExactlyAsync(b, token);
+    var g11 = Class_Prova_FINS.IntepretazioneWord(b,20);
 
 
 }

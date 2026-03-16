@@ -112,14 +112,17 @@ namespace Prova_FINS_TCP
             return payloadLen;
         }
 
-     
+
         private static void ScrivereTcpHeader1(Span<byte> buffer, uint Lungezza) // Fins_TCP 16 byte
         {
-
+            var of = 0;
             Encoding.ASCII.GetBytes("FINS", buffer);
-            BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(4), Lungezza - 8); // Lungezza e TCP_Erorre + TCP_Commando + Fins header + Fins Command + Dati
-            BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(8), (uint)FINS_TCP_Commandi.Freim_Send);
-            BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(12), (uint)FINS_TCP_Eorri.Normal);
+            of += 4;
+            BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(of), Lungezza - 8); // Lungezza e TCP_Erorre + TCP_Commando + Fins header + Fins Command + Dati
+            of += 4;
+            BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(of), (uint)FINS_TCP_Commandi.Freim_Send);
+            of += 4;
+            BinaryPrimitives.WriteUInt32BigEndian(buffer.Slice(of), (uint)FINS_TCP_Eorri.Normal);
 
             //MemoryMarshal.Cast<TcpHeader, byte>(new Span<TcpHeader>(new[] { Header })).CopyTo(b);
 
@@ -145,12 +148,12 @@ namespace Prova_FINS_TCP
             buffer[2] = (byte)MemoriaArea;
             BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(3), Indirizzo);
             buffer[5] = Bit;
-            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(6), (ushort)(SizeElemento/2));
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(6), (ushort)(SizeElemento / 2));
 
         }
 
 
-       public static byte[] Lettura(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort NumeroWord, byte NodoClient) // Fins_Freim_Lettura
+        public static byte[] Lettura(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, ushort SizeElemento, byte NodoClient) // Fins_Freim_Lettura
         {
             var b = new byte[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi];
             var of = 0;
@@ -158,7 +161,7 @@ namespace Prova_FINS_TCP
             of += LungezzaHeadrTCP;
             ScrivereFinsHeader(b.AsSpan(of, LungezzaHederFINS), NodoClient);
             of += LungezzaHederFINS;
-            Comandi(b.AsSpan(of, LungezzaCommandi), Command_Code.M_Read, MemoriaArea, Indirizzo, Bit, NumeroWord);
+            Comandi(b.AsSpan(of, LungezzaCommandi), Command_Code.M_Read, MemoriaArea, Indirizzo, Bit, SizeElemento);
             return b;
 
         }
@@ -177,35 +180,46 @@ namespace Prova_FINS_TCP
 
         public static byte[] ScrivereBIT(Memory_Area_Code MemoriaArea, ushort Indirizzo, byte Bit, bool value, byte NodoClient) // Fins_Freim_scrittura_BIT
         {
-            var b = Scrivere(MemoriaArea, Indirizzo, Bit,1, NodoClient);
+            var b = Scrivere(MemoriaArea, Indirizzo, Bit, 2, NodoClient);
             b[LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi] = (byte)(value ? 1 : 0);
             return b;
 
         }
         public static bool IntepretazioneBIT(byte[] b) //Intepretazione_BIT
         {
-            
+
             return b[30] == 0x01;
 
         }
         public static byte[] ScrivereWord(Memory_Area_Code MemoriaArea, ushort Indirizzo, ushort value, byte NodoClient) // Fins_Freim_scrittura_Word
         {
             var b = Scrivere(MemoriaArea, Indirizzo, 0, 2, NodoClient);
-            BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi, 2), value);
-            return b;
 
+            BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi, 2), value);
+
+            return b;
         }
 
-        public static uint IntepretazioneWord(byte[] b) //Intepretazione_Word
+        public static ushort IntepretazioneWord(byte[] b, ushort SizeElemento) //Intepretazione_Word
         {
+          //  var f = new ushort[SizeElemento / 2];
+           // for (int i = 14; i < SizeElemento / 2; i++)
+            //{
+              var f= BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(14, sizeof(ushort)));
 
-            return BinaryPrimitives.ReadUInt16BigEndian(b.AsSpan(30, sizeof(ushort)));
+            //}
+            return f;
+
 
         }
         public static byte[] ScrivereStringa(Memory_Area_Code MemoriaArea, ushort Indirizzo, string value, byte NodoClient) // Fins_Freim_scrittura_striga
         {
-            var T = Encoding.ASCII.GetBytes(value);
-            var b = Scrivere(MemoriaArea, Indirizzo, 0,(ushort)(T.Length), NodoClient);
+            var T = Encoding.ASCII.GetBytes(value).ToList();
+            if (T.Count % 2 != 0) // stinge non dispari ma sepre pari
+            {
+                T.Add(0);
+            }
+            var b = Scrivere(MemoriaArea, Indirizzo, 0, (ushort)(T.Count), NodoClient);
             T.CopyTo(b, LungezzaHeadrTCP + LungezzaHederFINS + LungezzaCommandi);
             return b;
 
@@ -213,7 +227,7 @@ namespace Prova_FINS_TCP
         public static string IntepretazioneString(byte[] b) //Intepretazione_Stringa
         {
             var c = 0;
-            for (int i = 30; i < 255; i++)
+            for (int i = 14; i < 255; i++)
             {
                 if (b[i] == 0)
                 {
@@ -221,7 +235,7 @@ namespace Prova_FINS_TCP
                 }
                 c++;
             }
-            return Encoding.ASCII.GetString(b, 30, c);
+            return Encoding.ASCII.GetString(b, 14, c);
         }
 
     }
