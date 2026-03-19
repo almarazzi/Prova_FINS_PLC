@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Prova_FINS_TCP
 {
-    public class Comuncazione<T>
+    public class Comunicazione<T>
     {
 
         private readonly string _Indirizzo;
@@ -16,7 +16,7 @@ namespace Prova_FINS_TCP
         private CostruzioneHeaderFinsTot.Memory_Area_Code _memory_Area_Code;
         private byte _BIT;
         private byte _Nodo;
-        public Comuncazione(string Indirizzo, T Value = default!)
+        public Comunicazione(string Indirizzo, T Value = default!)
         {
             _Value = Value;
             _Indirizzo = Indirizzo;
