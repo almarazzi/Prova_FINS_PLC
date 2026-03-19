@@ -70,7 +70,7 @@ namespace Prova_FINS_TCP
 
         }
 
-        private T Lettura(byte[] buffer)
+        private static T Lettura(byte[] buffer)
         {
             object risultato = typeof(T) switch
             {
@@ -86,7 +86,7 @@ namespace Prova_FINS_TCP
         }
 
 
-        public async Task<(T, bool)> ComuncazioneTCP(CancellationToken cancellationToken)
+        public  async Task<(T, bool)> ComuncazioneTCP(CancellationToken cancellationToken)
         {
 
             var BufferDiRitorno = new byte[1024];
