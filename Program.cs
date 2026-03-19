@@ -2,7 +2,7 @@
 
 CancellationTokenSource cts = new CancellationTokenSource();
 CancellationToken token = cts.Token;
-var tcpService = new Comuncazione<double>("w_word_cio111", 888888888888.99); //2147483647
+var tcpService = new Comuncazione<double>("r_word_cio111", 888888888888.99); //2147483647
 
 var (Valore, Isvalid) = await tcpService.ComuncazioneTCP(token);
 

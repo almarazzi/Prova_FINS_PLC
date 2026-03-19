@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using System.Text;
 using static Prova_FINS_TCP.CostruzioneHeaderFinsTot;
 
@@ -81,10 +82,7 @@ namespace Prova_FINS_TCP
         {
             SwapWord(b, 14, 4);
             var f = LeggiTBigEndianDaBuffer<int>(b, 14);
-            var hi = (f & 0xffff0000) >> 16;
-            var lo = (f & 0x00000ffff);
-            var v = (lo << 16) + hi;
-            return (int)v;
+            return f;
         }
         public static float IntepretazioneReal(byte[] b) //Intepretazione_Real
         {
@@ -94,7 +92,7 @@ namespace Prova_FINS_TCP
         }
         public static double IntepretazioneLReal(byte[] b) //Intepretazione_Lreal
         {
-            SwapWord(b, 14, 4);
+            SwapWord(b, 14, 8);
             var f = LeggiTBigEndianDaBuffer<double>(b, 14);
             return f;
         }
