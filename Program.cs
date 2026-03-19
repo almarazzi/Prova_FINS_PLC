@@ -12,34 +12,21 @@ Tipo = Tipo.ToUpper();
 if (Dato =="")
     Dato = "0";
 
-dynamic? Valore = null;
-bool Isvalid = false;
-switch (Tipo)
+
+
+(dynamic Value,bool IsValid) r = Tipo switch
 {
-    case "BIT":
-        (Valore, Isvalid) = await new Comunicazione<bool>(Indirizzo, bool.Parse(Dato)).ComuncazioneTCP(token);
-        break;
-    case "WORD":
-        (Valore,Isvalid) = await  new Comunicazione<ushort>(Indirizzo, ushort.Parse(Dato)).ComuncazioneTCP(token);
-        break;
-    case "DINT":
-        (Valore, Isvalid) = await new Comunicazione<int>(Indirizzo, int.Parse(Dato)).ComuncazioneTCP(token);
-        break;
-    case "REAL":
-        (Valore, Isvalid) = await new Comunicazione<float>(Indirizzo, float.Parse(Dato)).ComuncazioneTCP(token);
-        break;
-    case "LREAL":
-        (Valore, Isvalid) = await new Comunicazione<double>(Indirizzo, double.Parse(Dato)).ComuncazioneTCP(token);
-        break;
-    case "STRING":
-        (Valore, Isvalid) = await new Comunicazione<string>(Indirizzo, Dato).ComuncazioneTCP(token);
-        break;
+    "BIT" =>  await new Comunicazione<bool>(Indirizzo, bool.Parse(Dato)).ComuncazioneTCP(token),
+    "WORD" => await new Comunicazione<ushort>(Indirizzo, ushort.Parse(Dato)).ComuncazioneTCP(token),
+    "DINT" => await new Comunicazione<int>(Indirizzo, int.Parse(Dato)).ComuncazioneTCP(token),
+    "REAL" => await new Comunicazione<float>(Indirizzo, float.Parse(Dato)).ComuncazioneTCP(token),
+    "LREAL" => await new Comunicazione<double>(Indirizzo, double.Parse(Dato)).ComuncazioneTCP(token),
+    _ => throw new Exception("Erorre tipo non trovato"),
 
-}
-
-if (Isvalid is true && Valore is not null)
-    Console.WriteLine($"Per la Lettura il valore è {Valore}");
-if (Isvalid is true && Valore is null)
+};
+if (r.IsValid is true && r.Value is not null)
+    Console.WriteLine($"Per la Lettura il valore è {r.Value}");
+if (r.IsValid is true && r.Value is null)
     Console.WriteLine($"E andato tutto bene");
-if (Isvalid is false)
+if (r.IsValid is false)
     Console.WriteLine($"c'è stato un erorre");
