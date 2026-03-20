@@ -30,3 +30,7 @@ if (r.IsValid is true && r.Value is null)
     Console.WriteLine($"E andato tutto bene");
 if (r.IsValid is false)
     Console.WriteLine($"c'è stato un erorre");
+
+
+
+// Per comunicare con il simens usare snap7  https://www.mesta-automation.com/how-to-write-a-siemens-s7-plc-driver-with-c-and-sharp7/
