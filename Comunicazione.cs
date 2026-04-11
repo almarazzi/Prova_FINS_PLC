@@ -9,35 +9,18 @@ namespace Prova_FINS_TCP
     public class Comunicazione<T>
     {
 
-        private readonly string _Indirizzo;
         private readonly T _Value;
-        private string _LetturaScrittura = "";
-        private ushort _IndirizzoPrimaParte;
+        private readonly string _LetturaScrittura = "";
+        private readonly ushort _IndirizzoPrimaParte;
         private CostruzioneHeaderFinsTot.Memory_Area_Code _memory_Area_Code;
-        private byte _BIT;
+        private readonly byte _BIT;
         private byte _Nodo;
-        public Comunicazione(string Indirizzo, T Value = default!)
+        public Comunicazione(string LetturaScrittura, ushort IndirizzoPrimaParte, byte BIT, T Value)
         {
             _Value = Value;
-            _Indirizzo = Indirizzo;
-            ScomposizioneIndirizzo();
-        }
-
-        private void ScomposizioneIndirizzo()
-        {
-            var R = new Regex(@"^([R,W])_([A-Z_]+)([0-9]+)([.]([0-9]?|1[0-5]))?$");
-            var Spazi = new Regex(@"\s+");
-            var Modifice = Spazi.Replace(_Indirizzo, "").ToUpper();
-            var Indirizzo = R.Match(Modifice);
-            if (!Indirizzo.Success)
-                throw new Exception("Indirizzo non corisponde");
-            _LetturaScrittura = Indirizzo.Groups[1].Value;
-            _memory_Area_Code = Enum.Parse<CostruzioneHeaderFinsTot.Memory_Area_Code>(Indirizzo.Groups[2].Value);
-            _IndirizzoPrimaParte = ushort.Parse(Indirizzo.Groups[3].Value);
-            if (Indirizzo.Groups[4].Value != "")
-                _BIT = byte.Parse(Indirizzo.Groups[5].Value);
-            else
-                _BIT = 0;
+            _IndirizzoPrimaParte = IndirizzoPrimaParte;
+            _BIT = BIT;
+            _LetturaScrittura = LetturaScrittura;
         }
 
         private byte[] Costruzione()
