@@ -19,7 +19,7 @@ var IndirizzoPrimaParte = ushort.Parse(Indirizzo1.Groups[3].Value);
 byte bit = 0;
 if (Indirizzo1.Groups[4].Value != "")
     bit = byte.Parse(Indirizzo1.Groups[4].Value);
-var Dato="";
+var Dato = "";
 if (LetturaScrittura == "W")
 {
     Console.Write("dato => ");
@@ -32,12 +32,12 @@ Tipo = Tipo.ToUpper();
 
 (dynamic Value, bool IsValid) r = Tipo switch
 {
-    "BIT" => await new Comunicazione<bool>(LetturaScrittura,IndirizzoPrimaParte,bit, (LetturaScrittura == "W") ? bool.Parse(Dato): default ).ComuncazioneTCP(token),
-    "WORD" => await new Comunicazione<ushort>(LetturaScrittura, IndirizzoPrimaParte, bit,(LetturaScrittura == "W") ? ushort.Parse(Dato) : default).ComuncazioneTCP(token),
-    "DINT" => await new Comunicazione<int>(LetturaScrittura, IndirizzoPrimaParte, bit, (LetturaScrittura == "W")  ?int.Parse(Dato) : default ).ComuncazioneTCP(token),
-    "REAL" => await new Comunicazione<float>(LetturaScrittura, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? float.Parse(Dato) : default).ComuncazioneTCP(token),
-    "LREAL" => await new Comunicazione<double>(LetturaScrittura, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? double.Parse(Dato):default).ComuncazioneTCP(token),
-    "STRING" => await new Comunicazione<string>(LetturaScrittura, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? Dato : "").ComuncazioneTCP(token),
+    "BIT" => await new Comunicazione<bool>(LetturaScrittura, memory_Area_Code, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? bool.Parse(Dato) : default).ComuncazioneTCP(token),
+    "WORD" => await new Comunicazione<ushort>(LetturaScrittura, memory_Area_Code, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? ushort.Parse(Dato) : default).ComuncazioneTCP(token),
+    "DINT" => await new Comunicazione<int>(LetturaScrittura, memory_Area_Code, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? int.Parse(Dato) : default).ComuncazioneTCP(token),
+    "REAL" => await new Comunicazione<float>(LetturaScrittura, memory_Area_Code, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? float.Parse(Dato) : default).ComuncazioneTCP(token),
+    "LREAL" => await new Comunicazione<double>(LetturaScrittura, memory_Area_Code, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? double.Parse(Dato) : default).ComuncazioneTCP(token),
+    "STRING" => await new Comunicazione<string>(LetturaScrittura, memory_Area_Code, IndirizzoPrimaParte, bit, (LetturaScrittura == "W") ? Dato : "").ComuncazioneTCP(token),
     _ => throw new Exception("Erorre tipo non trovato"),
 
 };

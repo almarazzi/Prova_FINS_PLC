@@ -121,7 +121,7 @@ namespace Prova_FINS_TCP
 
         }
 
-        public static (uint, bool) Controllo_Ritrono(byte[] b)
+        public static uint Controllo_Ritrono(byte[] b)
         {
             var of = 0;
             if (!b.AsSpan(of, FINS.Length).SequenceEqual(FINS))
@@ -132,19 +132,15 @@ namespace Prova_FINS_TCP
                 throw new Exception($"lungezza Fins_TCP non coretto");
             of += 4;
             var Commando = (FINS_TCP_Commandi)Scrittura_Lettura.LeggiTBigEndianDaBuffer<uint>(b, of);
-            if (Commando != FINS_TCP_Commandi.Frame_Send)
+            if (Commando != FINS_TCP_Commandi.Frame_Send && Commando != FINS_TCP_Commandi.Conenection_Confirmation)
             {
                 throw new Exception($"Fins_TCP command non valido");
-            }
-            else if (Commando == FINS_TCP_Commandi.Conenection_Confirmation)
-            {
-                return (payloadLen, false);
             }
             of += 4;
             var Erorre = (FINS_TCP_Eorri)Scrittura_Lettura.LeggiTBigEndianDaBuffer<uint>(b, of);
             if (Erorre != FINS_TCP_Eorri.Normal)
                 throw new Exception($"Fins_TCP Erorre");
-            return (payloadLen, true);
+            return (payloadLen);
         }
 
 

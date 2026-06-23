@@ -1,6 +1,5 @@
 ﻿using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 
 
 
@@ -15,12 +14,13 @@ namespace Prova_FINS_TCP
         private CostruzioneHeaderFinsTot.Memory_Area_Code _memory_Area_Code;
         private readonly byte _BIT;
         private byte _Nodo;
-        public Comunicazione(string LetturaScrittura, ushort IndirizzoPrimaParte, byte BIT, T Value)
+        public Comunicazione(string LetturaScrittura, CostruzioneHeaderFinsTot.Memory_Area_Code memory_Area_Code, ushort IndirizzoPrimaParte, byte BIT, T Value)
         {
             _Value = Value;
             _IndirizzoPrimaParte = IndirizzoPrimaParte;
             _BIT = BIT;
             _LetturaScrittura = LetturaScrittura;
+            _memory_Area_Code = memory_Area_Code;
         }
 
         private byte[] Costruzione()
@@ -90,14 +90,14 @@ namespace Prova_FINS_TCP
                 var buffer = Costruzione();
                 Array.Clear(BufferDiRitorno);
                 uint l = 0;
-                bool ok;
-                do
-                {
+               // bool ok;
+               // do
+               // {
                     await stream.WriteAsync(buffer, cancellationToken);
                     await stream.ReadExactlyAsync(BufferDiRitorno, 0, 16, cancellationToken);
-                    (l, ok) = CostruzioneHeaderFinsTot.Controllo_Ritrono(BufferDiRitorno);
+                    l = CostruzioneHeaderFinsTot.Controllo_Ritrono(BufferDiRitorno);
 
-                } while (ok == false);
+               // } while (ok == false);
 
                 var BufferDati_valid = new byte[l - 8];
                 await stream.ReadExactlyAsync(BufferDati_valid, cancellationToken);
