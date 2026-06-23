@@ -137,7 +137,7 @@ namespace Prova_FINS_TCP
             }
             return Unsafe.As<ulong, T>(ref V);
         }
-        public static void ScriveTBigEndianInBuffer<T>(Span<byte> buffer, int of, T valore)
+        public static void ScriveTBigEndianInBuffer<T>(Span<byte> buffer, int of, T valore) where T : unmanaged
         {
             var size = Unsafe.SizeOf<T>();
             var V = Unsafe.As<T, ulong>(ref valore);
