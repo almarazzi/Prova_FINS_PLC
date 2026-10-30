@@ -199,6 +199,8 @@ namespace Prova_FINS_TCP
             of += LungezzaHeadrTCP;
             ScrivereFinsHeader(b.AsSpan(of, LungezzaHeadrFINS), NodoClient);
             of += LungezzaHeadrFINS;
+            if (MemoriaArea is (Memory_Area_Code.BIT_DM or Memory_Area_Code.BIT_CIO or Memory_Area_Code.BIT_WR or Memory_Area_Code.BIT_HR or Memory_Area_Code.BIT_HR or Memory_Area_Code.BIT_AR))
+                NumeroByteDati = 2;
             Comandi(b.AsSpan(of, LungezzaCommandi), Command, MemoriaArea, Indirizzo, Bit, NumeroByteDati);
             return b;
 
