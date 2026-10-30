@@ -50,4 +50,4 @@ if (r.IsValid is false)
 
 
 
-// Per comunicare con il simens usare snap7  https://www.mesta-automation.com/how-to-write-a-siemens-s7-plc-driver-with-c-and-sharp7/
+// Per comunicare con il simens usare  Sally7
